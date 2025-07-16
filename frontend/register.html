@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊 - 學生請假系統</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>學生請假系統 - 註冊</h1>
+    </header>
+    <main>
+        <div class="container">
+            <h2>註冊帳號</h2>
+            <form id="registerForm">
+                <label for="email">Email：</label><br>
+                <input type="email" id="email" name="email" required><br><br>
+                <label for="password">密碼：</label><br>
+                <input type="password" id="password" name="password" required minlength="6"><br><br>
+                <button type="submit" class="btn">註冊</button>
+            </form>
+            <div id="registerMsg"></div>
+        </div>
+    </main>
+    <script src="js/register.js"></script>
+    <script src="js/jwt.js"></script>
+</body>
+</html>
