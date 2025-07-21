@@ -103,8 +103,8 @@ def get_my_requests():
 def get_pending_requests():
     """獲取待審核申請 (僅限老師和管理員)"""
     try:
-        current_user = get_jwt_identity()
-        user = User.find_by_email(current_user)
+        current_user_id = get_jwt_identity()
+        user = User.find_by_id(current_user_id)
         
         if not user:
             return jsonify({'message': '使用者不存在'}), 404
