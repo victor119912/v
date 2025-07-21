@@ -9,16 +9,94 @@
 <body>
     <header>
         <h1>學生請假系統</h1>
+        <div class="user-info" style="display: none;">
+            <span>歡迎，<span class="user-name"></span></span>
+            <button id="logoutBtn" class="btn btn-logout">登出</button>
+        </div>
     </header>
     <main>
         <div class="container">
-            <h1>歡迎使用學生請假系統</h1>
-            <p>請選擇以下操作：</p>
-            <a href="register.html" class="btn">註冊</a>
-            <a href="login.html" class="btn">登入</a>
+            <!-- 未登入狀態 -->
+            <div id="guestContent">
+                <h1>歡迎使用學生請假系統</h1>
+                <p>請選擇以下操作：</p>
+                <a href="register.html" class="btn">註冊</a>
+                <a href="login.html" class="btn">登入</a>
+            </div>
+            
+            <!-- 已登入狀態 -->
+            <div id="userContent" style="display: none;">
+                <h1>歡迎回來，<span class="user-name"></span>！</h1>
+                <div class="user-dashboard">
+                    <div class="dashboard-card">
+                        <h3>個人資訊</h3>
+                        <p>Email: <span class="user-email"></span></p>
+                        <p>角色: <span class="user-role"></span></p>
+                    </div>
+                    
+                    <div class="dashboard-actions">
+                        <h3>快速操作</h3>
+                        <a href="#" class="btn" onclick="alert('請假申請功能開發中...')">申請請假</a>
+                        <a href="#" class="btn" onclick="alert('請假記錄功能開發中...')">查看請假記錄</a>
+                        <a href="#" class="btn" onclick="alert('個人設定功能開發中...')">個人設定</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
     <script src="js/scripts.js"></script>
     <script src="js/jwt.js"></script>
+    <script>
+        // 頁面載入完成後檢查登入狀態
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = localStorage.getItem('jwt');
+            
+            if (window.jwtUtils && window.jwtUtils.isJwtValid(token)) {
+                // 已登入，顯示使用者內容
+                const user = await window.jwtUtils.getCurrentUser();
+                if (user) {
+                    showUserContent(user);
+                } else {
+                    showGuestContent();
+                }
+            } else {
+                // 未登入，顯示訪客內容
+                showGuestContent();
+            }
+            
+            // 登出按鈕事件
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (window.jwtUtils) {
+                    window.jwtUtils.logout();
+                }
+                showGuestContent();
+            });
+        });
+        
+        function showUserContent(user) {
+            document.getElementById('guestContent').style.display = 'none';
+            document.getElementById('userContent').style.display = 'block';
+            document.querySelector('.user-info').style.display = 'flex';
+            
+            // 更新使用者資訊
+            document.querySelectorAll('.user-name').forEach(el => {
+                el.textContent = user.name || user.email.split('@')[0];
+            });
+            document.querySelectorAll('.user-email').forEach(el => {
+                el.textContent = user.email;
+            });
+            document.querySelectorAll('.user-role').forEach(el => {
+                el.textContent = user.role === 'student' ? '學生' : 
+                                user.role === 'teacher' ? '老師' : 
+                                user.role === 'admin' ? '管理員' : user.role;
+            });
+        }
+        
+        function showGuestContent() {
+            document.getElementById('guestContent').style.display = 'block';
+            document.getElementById('userContent').style.display = 'none';
+            document.querySelector('.user-info').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
