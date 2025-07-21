@@ -36,8 +36,9 @@
                     
                     <div class="dashboard-actions">
                         <h3>快速操作</h3>
-                        <a href="#" class="btn" onclick="alert('請假申請功能開發中...')">申請請假</a>
-                        <a href="#" class="btn" onclick="alert('請假記錄功能開發中...')">查看請假記錄</a>
+                        <a href="leave-apply.html" class="btn">申請請假</a>
+                        <a href="leave-history.html" class="btn">查看請假記錄</a>
+                        <a href="admin-review.html" class="btn admin-only" style="display: none;">審核管理</a>
                         <a href="#" class="btn" onclick="alert('個人設定功能開發中...')">個人設定</a>
                     </div>
                 </div>
@@ -77,6 +78,14 @@
             document.getElementById('guestContent').style.display = 'none';
             document.getElementById('userContent').style.display = 'block';
             document.querySelector('.user-info').style.display = 'flex';
+            
+            // 顯示/隱藏管理員功能
+            const adminElements = document.querySelectorAll('.admin-only');
+            if (user.role === 'teacher' || user.role === 'admin') {
+                adminElements.forEach(el => el.style.display = 'inline-block');
+            } else {
+                adminElements.forEach(el => el.style.display = 'none');
+            }
             
             // 更新使用者資訊
             document.querySelectorAll('.user-name').forEach(el => {

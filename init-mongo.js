@@ -7,11 +7,15 @@ db.users.createIndex({ "student_id": 1 });
 db.users.createIndex({ "role": 1 });
 db.users.createIndex({ "created_at": 1 });
 
-// 建立請假申請集合索引 (為未來功能準備)
+// 建立請假申請集合索引
 db.leave_requests.createIndex({ "user_id": 1 });
 db.leave_requests.createIndex({ "status": 1 });
 db.leave_requests.createIndex({ "start_date": 1 });
+db.leave_requests.createIndex({ "end_date": 1 });
+db.leave_requests.createIndex({ "leave_type": 1 });
 db.leave_requests.createIndex({ "created_at": 1 });
+db.leave_requests.createIndex({ "user_id": 1, "status": 1 });
+db.leave_requests.createIndex({ "user_id": 1, "created_at": -1 });
 
 // 插入測試資料 (可選)
 db.users.insertOne({

@@ -26,9 +26,11 @@ def create_app():
     # 註冊藍圖
     from routes.auth import auth_bp
     from routes.users import users_bp
+    from routes.leave import leave_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(users_bp, url_prefix='/api/users')
+    app.register_blueprint(leave_bp, url_prefix='/api/leave')
     
     return app
 

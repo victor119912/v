@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>申請請假 - 學生請假系統</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>學生請假系統 - 申請請假</h1>
+        <div class="user-info" style="display: none;">
+            <span>歡迎，<span class="user-name"></span></span>
+            <button id="logoutBtn" class="btn btn-logout">登出</button>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <h2>申請請假</h2>
+            <nav class="breadcrumb">
+                <a href="index.html">首頁</a> &gt; 申請請假
+            </nav>
+            
+            <form id="leaveForm">
+                <div class="form-group">
+                    <label for="leaveType">請假類型：</label>
+                    <select id="leaveType" name="leaveType" required>
+                        <option value="">請選擇請假類型</option>
+                        <option value="sick">病假</option>
+                        <option value="personal">事假</option>
+                        <option value="family">家事假</option>
+                        <option value="funeral">喪假</option>
+                        <option value="maternity">產假</option>
+                        <option value="emergency">緊急假</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">開始日期：</label>
+                        <input type="date" id="startDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">結束日期：</label>
+                        <input type="date" id="endDate" name="endDate" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">請假原因：</label>
+                    <textarea id="reason" name="reason" rows="4" required 
+                              placeholder="請詳細說明請假原因..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="emergencyContact">緊急聯絡人：</label>
+                    <input type="text" id="emergencyContact" name="emergencyContact" 
+                           placeholder="姓名和電話號碼">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">提交申請</button>
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">取消</button>
+                </div>
+            </form>
+
+            <div id="leaveMsg"></div>
+        </div>
+    </main>
+    
+    <script src="js/jwt.js"></script>
+    <script>
+        // 頁面載入時檢查登入狀態
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = localStorage.getItem('jwt');
+            
+            if (!window.jwtUtils || !window.jwtUtils.isJwtValid(token)) {
+                alert('請先登入系統');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 取得使用者資訊並更新顯示
+            const user = await window.jwtUtils.getCurrentUser();
+            if (user) {
+                document.querySelector('.user-info').style.display = 'flex';
+                document.querySelector('.user-name').textContent = user.name || user.email.split('@')[0];
+            }
+            
+            // 設定最小日期為今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').min = today;
+            document.getElementById('endDate').min = today;
+            
+            // 當開始日期變更時，更新結束日期的最小值
+            document.getElementById('startDate').addEventListener('change', function() {
+                document.getElementById('endDate').min = this.value;
+            });
+            
+            // 登出按鈕事件
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (window.jwtUtils) {
+                    window.jwtUtils.logout();
+                }
+                window.location.href = 'index.html';
+            });
+        });
+        
+        // 表單提交處理
+        document.getElementById('leaveForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                leave_type: formData.get('leaveType'),
+                start_date: formData.get('startDate') + 'T00:00:00Z',
+                end_date: formData.get('endDate') + 'T23:59:59Z',
+                reason: formData.get('reason'),
+                emergency_contact: formData.get('emergencyContact')
+            };
+            
+            const msgDiv = document.getElementById('leaveMsg');
+            const submitButton = document.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            
+            // 前端驗證
+            if (!data.leave_type) {
+                showMessage('請選擇請假類型', 'error');
+                return;
+            }
+            
+            if (!data.start_date || !data.end_date) {
+                showMessage('請選擇請假日期', 'error');
+                return;
+            }
+            
+            if (!data.reason.trim()) {
+                showMessage('請填寫請假原因', 'error');
+                return;
+            }
+            
+            // 檢查日期邏輯
+            const startDate = new Date(formData.get('startDate'));
+            const endDate = new Date(formData.get('endDate'));
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (startDate < today) {
+                showMessage('開始日期不能早於今天', 'error');
+                return;
+            }
+            
+            if (endDate < startDate) {
+                showMessage('結束日期不能早於開始日期', 'error');
+                return;
+            }
+            
+            // 顯示載入狀態
+            setLoading(true);
+            
+            try {
+                const token = localStorage.getItem('jwt');
+                const response = await fetch('/api/leave/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('請假申請提交成功！', 'success');
+                    
+                    // 重置表單
+                    document.getElementById('leaveForm').reset();
+                    
+                    // 延遲跳轉到請假記錄頁面
+                    setTimeout(() => {
+                        window.location.href = 'leave-history.html';
+                    }, 2000);
+                } else {
+                    showMessage(result.message || '申請提交失敗', 'error');
+                }
+                
+            } catch (error) {
+                console.error('申請提交失敗:', error);
+                showMessage('網路連線錯誤，請稍後再試', 'error');
+            } finally {
+                setLoading(false);
+            }
+            
+            function showMessage(message, type) {
+                msgDiv.textContent = message;
+                msgDiv.className = `message ${type}`;
+                
+                // 滾動到訊息位置
+                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    submitButton.textContent = '提交中...';
+                    submitButton.disabled = true;
+                    
+                    // 禁用所有表單欄位
+                    const formElements = document.querySelectorAll('#leaveForm input, #leaveForm select, #leaveForm textarea');
+                    formElements.forEach(element => element.disabled = true);
+                } else {
+                    submitButton.textContent = originalButtonText;
+                    submitButton.disabled = false;
+                    
+                    // 啟用所有表單欄位
+                    const formElements = document.querySelectorAll('#leaveForm input, #leaveForm select, #leaveForm textarea');
+                    formElements.forEach(element => element.disabled = false);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
